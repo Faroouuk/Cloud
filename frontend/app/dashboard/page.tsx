@@ -1,6 +1,7 @@
 "use client";
 
 import "@/lib/amplify";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authGet } from "@/lib/api";
 import { api, getAuthHeaders } from "@/lib/api";
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [userRole, setUserRole] = useState("");
 
   // New task form state
   const [title, setTitle] = useState("");
@@ -39,13 +41,31 @@ export default function DashboardPage() {
       setTasks(response.data);
     } catch (err) {
       setError("Failed to load tasks");
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchUserRole = async () => {
+    try {
+      const response = await authGet("/protected");
+      const user = response.data.user;
+      const role =
+        user?.["custom:role"] ||
+        (user?.["cognito:groups"] || [])[0] ||
+        "";
+      setUserRole(role);
+    } catch (err) {
+      setError("Failed to load user info");
     }
   };
 
   useEffect(() => {
-    fetchTasks();
+    const load = async () => {
+      await fetchUserRole();
+      await fetchTasks();
+      setLoading(false);
+    };
+
+    load();
   }, []);
 
   const handleCreateTask = async () => {
@@ -88,6 +108,16 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const headers = await getAuthHeaders();
+      await api.delete(`/tasks/${taskId}`, { headers });
+      fetchTasks();
+    } catch (err) {
+      alert("Failed to delete task");
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
     window.location.href = "/";
@@ -109,14 +139,39 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Mini-Jira Dashboard</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Mini-Jira Dashboard</h1>
+          {userRole && (
+            <p className="text-sm text-gray-500">
+              Role: {userRole}
+            </p>
+          )}
+        </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-          >
-            + New Task
-          </button>
+          {(userRole === "Manager" || userRole === "Admin") && (
+            <>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+              >
+                + New Task
+              </button>
+              <Link
+                href="/review"
+                className="bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700"
+              >
+                Review Requests
+              </Link>
+            </>
+          )}
+          {userRole === "Employee" && (
+            <Link
+              href="/request"
+              className="bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700"
+            >
+              Request Status Change
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="border px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100"
@@ -214,16 +269,29 @@ export default function DashboardPage() {
                     </span>
                     <span className="text-xs text-gray-400">{task.teamId}</span>
                   </div>
-                  {/* Status change dropdown */}
-                  <select
-                    className="mt-2 w-full text-xs border rounded p-1"
-                    value={task.status}
-                    onChange={(e) => handleStatusChange(task, e.target.value)}
-                  >
-                    {COLUMNS.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
+                  {userRole === "Manager" || userRole === "Admin" ? (
+                    <select
+                      className="mt-2 w-full text-xs border rounded p-1"
+                      value={task.status}
+                      onChange={(e) => handleStatusChange(task, e.target.value)}
+                    >
+                      {COLUMNS.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Status: {task.status}
+                    </p>
+                  )}
+                  {userRole === "Admin" && (
+                    <button
+                      onClick={() => handleDeleteTask(task.taskId)}
+                      className="mt-2 w-full text-xs bg-red-500 text-white rounded p-2 hover:bg-red-600"
+                    >
+                      Delete Task
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

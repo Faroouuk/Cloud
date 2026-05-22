@@ -14,6 +14,13 @@ export default function RegisterPage() {
 
   const [password, setPassword] = useState("");
 
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [role, setRole] = useState("Employee");
+
+  const [teamId, setTeamId] = useState("");
+
   const [confirmationCode, setConfirmationCode] =
     useState("");
 
@@ -22,6 +29,10 @@ export default function RegisterPage() {
 
   const handleRegister = async () => {
     try {
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
       const result = await signUp({
         username: email,
 
@@ -32,6 +43,12 @@ export default function RegisterPage() {
             email,
 
             name,
+
+            nickname: name,
+
+            "custom:role": role,
+
+            "custom:teamId": teamId,
           },
         },
       });
@@ -125,6 +142,25 @@ export default function RegisterPage() {
         }
       />
 
+      <select
+        className="border p-2"
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+      >
+        <option value="Employee">Employee</option>
+        <option value="Manager">Manager</option>
+        <option value="Admin">Admin</option>
+      </select>
+
+      <input
+        className="border p-2"
+        placeholder="Team ID"
+        value={teamId}
+        onChange={(e) =>
+          setTeamId(e.target.value)
+        }
+      />
+
       <input
         className="border p-2"
         type="password"
@@ -132,6 +168,16 @@ export default function RegisterPage() {
         value={password}
         onChange={(e) =>
           setPassword(e.target.value)
+        }
+      />
+
+      <input
+        className="border p-2"
+        type="password"
+        placeholder="Confirm Password"
+        value={confirmPassword}
+        onChange={(e) =>
+          setConfirmPassword(e.target.value)
         }
       />
 
