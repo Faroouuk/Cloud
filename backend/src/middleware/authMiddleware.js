@@ -54,6 +54,7 @@ const authMiddleware = async (
       "PAYLOAD:",
       payload
     );
+    
 
     // Attach user to request
     req.user = payload;
