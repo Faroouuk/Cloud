@@ -284,14 +284,21 @@ export default function DashboardPage() {
                       Status: {task.status}
                     </p>
                   )}
-                  {userRole === "Admin" && (
-                    <button
-                      onClick={() => handleDeleteTask(task.taskId)}
-                      className="mt-2 w-full text-xs bg-red-500 text-white rounded p-2 hover:bg-red-600"
-                    >
-                      Delete Task
-                    </button>
-                  )}
+                  {(userRole === "Admin" || userRole === "Manager") && (
+
+  <button
+
+    onClick={() => handleDeleteTask(task.taskId)}
+
+    className="mt-2 w-full text-xs bg-red-500 text-white rounded p-2 hover:bg-red-600"
+
+  >
+
+    Delete Task
+
+  </button>
+
+)}
                 </div>
               ))}
             </div>

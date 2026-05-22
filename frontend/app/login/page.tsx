@@ -1,15 +1,33 @@
 "use client";
-
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchAuthSession } from "aws-amplify/auth";
 import {
   confirmSignUp,
   resendSignUpCode,
   signIn,
 } from "aws-amplify/auth";
 
-import { useState } from "react";
 import { authGet } from "@/lib/api";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const session = await fetchAuthSession();
+
+      if (session.tokens?.idToken) {
+        router.replace("/dashboard");
+      }
+    } catch {
+      // User is not logged in
+    }
+  };
+
+  checkAuth();
+}, [router]);
   const [email, setEmail] = useState("");
 
   const [password, setPassword] =
@@ -119,63 +137,83 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="p-10 flex flex-col gap-4 max-w-sm">
-      <h1 className="text-2xl font-bold">
+  <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+      <h1 className="text-3xl font-bold text-center mb-6">
         Login
       </h1>
 
-      <input
-        className="border p-2"
-        placeholder="Email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-      />
+      <div className="flex flex-col gap-4">
+        <input
+          type="email"
+          placeholder="Enter your email"
+          className="border p-3 rounded-lg"
+          value={email}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
+        />
 
-      <input
-        className="border p-2"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
-      />
+        <input
+          type="password"
+          placeholder="Enter your password"
+          className="border p-3 rounded-lg"
+          value={password}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
+        />
 
-      <button
-        className="border p-2"
-        onClick={handleLogin}
-      >
-        Login
-      </button>
+        <button
+          onClick={handleLogin}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors"
+        >
+          Login
+        </button>
+        <p className="text-center text-sm text-gray-600">
+  Don't have an account?{" "}
+  <a
+    href="/register"
+    className="text-blue-600 hover:text-blue-700 font-medium"
+  >
+    Sign Up
+  </a>
+</p>
 
-      {needsConfirmation && (
-        <>
-          <input
-            className="border p-2"
-            placeholder="Confirmation code"
-            value={confirmationCode}
-            onChange={(e) =>
-              setConfirmationCode(e.target.value)
-            }
-          />
+        {needsConfirmation && (
+          <>
+            <div className="border-t pt-4 mt-2">
+              <input
+                className="border p-3 rounded-lg w-full mb-3"
+                placeholder="Confirmation Code"
+                value={confirmationCode}
+                onChange={(e) =>
+                  setConfirmationCode(
+                    e.target.value
+                  )
+                }
+              />
 
-          <button
-            className="border p-2"
-            onClick={handleConfirmAndLogin}
-          >
-            Confirm and login
-          </button>
+              <button
+                onClick={
+                  handleConfirmAndLogin
+                }
+                className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg w-full mb-2 transition-colors"
+              >
+                Confirm & Login
+              </button>
 
-          <button
-            className="border p-2"
-            onClick={handleResendCode}
-          >
-            Resend code
-          </button>
-        </>
-      )}
+              <button
+                onClick={handleResendCode}
+                className="border py-3 rounded-lg w-full hover:bg-gray-50 transition-colors"
+              >
+                Resend Code
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
-  );
+  </div>
+);
 }

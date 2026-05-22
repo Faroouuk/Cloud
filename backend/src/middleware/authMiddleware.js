@@ -21,6 +21,14 @@ const authMiddleware = async (
   try {
     const authHeader =
       req.headers.authorization;
+      console.log(
+  "\n========== AUTH =========="
+);
+
+console.log(
+  "Authorization Header:",
+  authHeader
+);
 
     // Check Authorization header
     if (
@@ -49,6 +57,17 @@ const authMiddleware = async (
     // Verify JWT with Cognito
     const payload =
       await verifier.verify(token);
+      console.log(
+  "\n========== JWT VERIFIED =========="
+);
+
+console.log(
+  JSON.stringify(
+    payload,
+    null,
+    2
+  )
+);
 
     console.log(
       "PAYLOAD:",

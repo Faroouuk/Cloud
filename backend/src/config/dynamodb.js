@@ -8,13 +8,25 @@ const {
   DynamoDBDocumentClient,
 } = require("@aws-sdk/lib-dynamodb");
 
-const client = new DynamoDBClient({
+const clientConfig = {
   region: "us-east-1",
-  credentials: {
+};
+
+if (
+  process.env.AWS_ACCESS_KEY_ID &&
+  process.env.AWS_SECRET_ACCESS_KEY
+) {
+  clientConfig.credentials = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+  };
+} else {
+  console.warn(
+    "AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY not set; using default AWS credential provider chain."
+  );
+}
+
+const client = new DynamoDBClient(clientConfig);
 
 const dynamodb =
   DynamoDBDocumentClient.from(client);

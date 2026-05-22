@@ -82,6 +82,16 @@ router.get(
   requireRole("Employee", "Manager", "Admin"),
   async (req, res) => {
     try {
+      console.log("\n========== TASK FETCH ==========");
+      console.log(
+        "User:",
+        JSON.stringify(req.user, null, 2)
+      );
+
+      console.log(
+        "Scanning DynamoDB table: Tasks"
+      );
+
       const result =
         await dynamodb.send(
           new ScanCommand({
@@ -89,18 +99,66 @@ router.get(
           })
         );
 
-      res.json(result.Items);
+      console.log(
+        "DynamoDB Scan Success"
+      );
+
+      console.log(
+        "Result:",
+        JSON.stringify(result, null, 2)
+      );
+
+      res.json(result.Items || []);
     } catch (error) {
+      console.log(
+        "\n========== TASK FETCH ERROR =========="
+      );
+
+      console.error(
+        "Full Error:"
+      );
+
       console.error(error);
+
+      console.error(
+        "Name:",
+        error?.name
+      );
+
+      console.error(
+        "Message:",
+        error?.message
+      );
+
+      console.error(
+        "Stack:",
+        error?.stack
+      );
+
+      if (error?.$metadata) {
+        console.error(
+          "AWS Metadata:",
+          JSON.stringify(
+            error.$metadata,
+            null,
+            2
+          )
+        );
+      }
 
       res.status(500).json({
         message:
           "Failed to fetch tasks",
+        error:
+          error?.message ||
+          "Unknown error",
+        name:
+          error?.name ||
+          "UnknownError",
       });
     }
   }
 );
-
 router.put(
   "/:taskId",
   authMiddleware,
@@ -166,7 +224,7 @@ router.put(
 router.delete(
   "/:taskId",
   authMiddleware,
-  requireRole("Admin"),
+  requireRole("Admin","Manager"),
   async (req, res) => {
     try {
       const { taskId } = req.params;
