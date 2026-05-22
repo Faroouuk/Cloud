@@ -4,12 +4,19 @@ const cors = require("cors");
 const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
+
 const dynamodb =
   require("./config/dynamodb");
 
 const {
   ScanCommand,
 } = require("@aws-sdk/lib-dynamodb");
+
+const taskRoutes =
+  require("./routes/tasks");
+
+const authRoutes =
+  require("./routes/auth");
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -19,6 +26,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
+
       if (
         !origin ||
         allowedOrigins.includes(origin)
@@ -31,33 +39,44 @@ app.use(
         new Error("Not allowed by CORS")
       );
     },
+
     credentials: true,
   })
 );
 
 app.use(express.json());
 
+
+
 app.get("/", (req, res) => {
+
   res.json({
     message: "Backend running",
   });
+
 });
+
+
 
 app.get(
   "/protected",
   authMiddleware,
   (req, res) => {
+
     res.json({
       message: "Protected route works",
       user: req.user,
     });
+
   }
 );
 
 
 
 app.get("/aws-test", async (req, res) => {
+
   try {
+
     const result =
       await dynamodb.send(
         new ScanCommand({
@@ -66,23 +85,36 @@ app.get("/aws-test", async (req, res) => {
       );
 
     res.json(result);
+
   } catch (error) {
+
     console.error(error);
 
     res.status(500).json(error);
+
   }
+
 });
 
 
 
-const taskRoutes =
-  require("./routes/tasks");
-
 app.use("/tasks", taskRoutes);
+
+
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+
+
 const PORT = 5050;
 
 app.listen(PORT, () => {
+
   console.log(
     `Server running on port ${PORT}`
   );
+
 });

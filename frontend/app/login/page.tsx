@@ -1,181 +1,81 @@
 "use client";
 
-import {
-  confirmSignUp,
-  resendSignUpCode,
-  signIn,
-} from "aws-amplify/auth";
-
 import { useState } from "react";
-import { authGet } from "@/lib/api";
 
 export default function LoginPage() {
+
   const [email, setEmail] = useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [confirmationCode, setConfirmationCode] =
-    useState("");
-
-  const [needsConfirmation, setNeedsConfirmation] =
-    useState(false);
-
-  const callProtectedRoute = async () => {
-    const response = await authGet("/protected");
-    console.log("Backend Response:", response.data);
-    window.location.href = "/dashboard";
-  };
+  const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
+
     try {
-      // Sign in to Cognito
-      const result = await signIn({
-        username: email,
-        password,
+
+      const response = await fetch("http://localhost:5050/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      console.log("Login Result:", result);
+      const data = await response.json();
 
-      if (!result.isSignedIn) {
-        if (
-          result.nextStep.signInStep ===
-          "CONFIRM_SIGN_UP"
-        ) {
-          setNeedsConfirmation(true);
-          alert(
-            "Check your email for the confirmation code."
-          );
-          return;
-        }
-
-        alert(
-          `Login requires next step: ${result.nextStep.signInStep}`
-        );
-        return;
+      if (response.ok) {
+        alert("Login successful");
+        console.log(data);
+      } else {
+        alert(data.message || "Login failed");
       }
 
-      await callProtectedRoute();
-    } catch (error: unknown) {
-      console.error(error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Login failed"
-      );
-    }
-  };
-
-  const handleConfirmAndLogin = async () => {
-    try {
-      await confirmSignUp({
-        username: email,
-        confirmationCode,
-      });
-
-      setNeedsConfirmation(false);
-
-      const result = await signIn({
-        username: email,
-        password,
-      });
-
-      if (!result.isSignedIn) {
-        alert(
-          `Login requires next step: ${result.nextStep.signInStep}`
-        );
-        return;
-      }
-
-      await callProtectedRoute();
-    } catch (error: unknown) {
-      console.error(error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Confirmation failed"
-      );
-    }
-  };
-
-  const handleResendCode = async () => {
-    try {
-      await resendSignUpCode({
-        username: email,
-      });
-
-      alert("Confirmation code sent.");
-    } catch (error: unknown) {
-      console.error(error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Could not resend code"
-      );
+    } catch (error) {
+      console.log(error);
+      alert("Something went wrong");
     }
   };
 
   return (
-    <div className="p-10 flex flex-col gap-4 max-w-sm">
-      <h1 className="text-2xl font-bold">
-        Login
-      </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
-      <input
-        className="border p-2"
-        placeholder="Email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-      />
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-[350px]">
 
-      <input
-        className="border p-2"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
-      />
+        <h1 className="text-3xl font-bold text-center mb-6">
+          Login
+        </h1>
 
-      <button
-        className="border p-2"
-        onClick={handleLogin}
-      >
-        Login
-      </button>
+        <div className="flex flex-col gap-4">
 
-      {needsConfirmation && (
-        <>
           <input
-            className="border p-2"
-            placeholder="Confirmation code"
-            value={confirmationCode}
-            onChange={(e) =>
-              setConfirmationCode(e.target.value)
-            }
+            type="email"
+            placeholder="Enter your email"
+            className="border p-3 rounded-lg"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            placeholder="Enter your password"
+            className="border p-3 rounded-lg"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           <button
-            className="border p-2"
-            onClick={handleConfirmAndLogin}
+            onClick={handleLogin}
+            className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg"
           >
-            Confirm and login
+            Login
           </button>
 
-          <button
-            className="border p-2"
-            onClick={handleResendCode}
-          >
-            Resend code
-          </button>
-        </>
-      )}
+        </div>
+
+      </div>
+
     </div>
   );
 }
