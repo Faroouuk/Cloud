@@ -5,6 +5,8 @@ const { v4: uuidv4 } = require("uuid");
 const {
   PutCommand,
   ScanCommand,
+  UpdateCommand,
+  DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
 const dynamodb = require("../config/dynamodb");
@@ -100,6 +102,7 @@ router.put(
   async (req, res) => {
     try {
       const { taskId } = req.params;
+
       const {
         title,
         description,
@@ -109,33 +112,80 @@ router.put(
         assigneeId,
       } = req.body;
 
-      const { UpdateCommand } = require("@aws-sdk/lib-dynamodb");
-
       await dynamodb.send(
         new UpdateCommand({
           TableName: "Tasks",
+
           Key: { taskId },
+
           UpdateExpression:
             "set #s = :status, title = :title, description = :description, priority = :priority, teamId = :teamId, assigneeId = :assigneeId",
+
           ExpressionAttributeNames: {
             "#s": "status",
           },
+
           ExpressionAttributeValues: {
             ":status": status,
             ":title": title,
-            ":description": description,
+            ":description":
+              description,
             ":priority": priority,
             ":teamId": teamId,
-            ":assigneeId": assigneeId,
+            ":assigneeId":
+              assigneeId,
           },
         })
       );
 
-      res.json({ taskId, status });
+      res.json({
+        message:
+          "Task updated successfully",
+
+        taskId,
+
+        status,
+      });
     } catch (error) {
       console.error(error);
+
       res.status(500).json({
-        message: "Failed to update task",
+        message:
+          "Failed to update task",
+      });
+    }
+  }
+);
+
+router.delete(
+  "/:taskId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { taskId } = req.params;
+
+      await dynamodb.send(
+        new DeleteCommand({
+          TableName: "Tasks",
+
+          Key: {
+            taskId,
+          },
+        })
+      );
+
+      res.json({
+        message:
+          "Task deleted successfully",
+
+        taskId,
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        message:
+          "Failed to delete task",
       });
     }
   }
