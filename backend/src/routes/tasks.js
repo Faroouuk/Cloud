@@ -94,4 +94,51 @@ router.get(
   }
 );
 
+router.put(
+  "/:taskId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const {
+        title,
+        description,
+        status,
+        priority,
+        teamId,
+        assigneeId,
+      } = req.body;
+
+      const { UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+
+      await dynamodb.send(
+        new UpdateCommand({
+          TableName: "Tasks",
+          Key: { taskId },
+          UpdateExpression:
+            "set #s = :status, title = :title, description = :description, priority = :priority, teamId = :teamId, assigneeId = :assigneeId",
+          ExpressionAttributeNames: {
+            "#s": "status",
+          },
+          ExpressionAttributeValues: {
+            ":status": status,
+            ":title": title,
+            ":description": description,
+            ":priority": priority,
+            ":teamId": teamId,
+            ":assigneeId": assigneeId,
+          },
+        })
+      );
+
+      res.json({ taskId, status });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Failed to update task",
+      });
+    }
+  }
+);
+
 module.exports = router;

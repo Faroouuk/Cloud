@@ -22,15 +22,9 @@ export default function LoginPage() {
     useState(false);
 
   const callProtectedRoute = async () => {
-    const response =
-      await authGet("/protected");
-
-    console.log(
-      "Backend Response:",
-      response.data
-    );
-
-    alert("Logged in successfully!");
+    const response = await authGet("/protected");
+    console.log("Backend Response:", response.data);
+    window.location.href = "/dashboard";
   };
 
   const handleLogin = async () => {
